@@ -45,13 +45,15 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (page > 1) {
-      window.scrollBy({
-        top: document.documentElement.scrollHeight,
-        behavior: "smooth",
-      });
+    if (page > 1 && images.length > 0) {
+      setTimeout(() => {
+        window.scrollBy({
+          top: document.documentElement.scrollHeight,
+          behavior: "smooth",
+        });
+      }, 100);
     }
-  }, [page]);
+  }, [page, images]);
 
   useEffect(() => {
     if (!query) return;
