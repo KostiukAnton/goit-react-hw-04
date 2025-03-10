@@ -1,66 +1,106 @@
 import "../App/App.css";
-import ContactForm from "../ContactForm/ContactForm";
-import SearchBox from "../SearchBox/SearchBox";
-import ContactList from "../ContactList/ContactList";
+import LoadMoreBtn from "../LoadMoreBtn/LoadMoreBtn";
+import SearchBar from "../SearchBar/SearchBar";
+import ImageGallery from "../ImageGallery/ImageGallery";
+import Loader from "../Loader/Loader";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import ImageModal from "../ImageModal/ImageModal";
 import { useState, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import Modal from "react-modal";
+
+Modal.setAppElement("#root");
 
 export default function App() {
-  const [contacts, setContacts] = useState(() => {
-    const savedContacts = window.localStorage.getItem("saved-contacts");
-    if (savedContacts) {
-      try {
-        return JSON.parse(savedContacts);
-      } catch (error) {
-        console.error("Error parsing contacts from localStorage:", error);
-        localStorage.removeItem("saved-contacts");
-        return [
-          { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
-          { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
-          { id: "id-3", name: "Eden Clements", number: "645-17-79" },
-          { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
-        ];
-      }
-    }
-    return [
-      { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
-      { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
-      { id: "id-3", name: "Eden Clements", number: "645-17-79" },
-      { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
-    ];
-  });
+  const API_KEY = "7ge4fZ0BcVp1WFSFUeB6BLKpagDibNn44MlAaDw8PSs";
+  const [query, setQuery] = useState("");
+  const [images, setImages] = useState([]);
+  console.log("images :>> ", images);
+  const [page, setPage] = useState(1);
+  const [loadMore, setLoadMore] = useState(false);
+  const [loading, setLoading] = useState();
+  const [errorMessage, setErrorMessage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(false);
+
+  const openModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const closeModal = () => {
+    setSelectedImage(false);
+  };
+
+  const handleSearchSubmit = (newQuery) => {
+    if (newQuery === query) return;
+    setQuery(newQuery);
+    setImages([]);
+    setPage(1);
+    setLoadMore(false);
+    setErrorMessage(false);
+  };
+
+  const handleLoadMore = () => {
+    setPage((prevPages) => prevPages + 1);
+  };
 
   useEffect(() => {
-    if (contacts.length > 0) {
-      window.localStorage.setItem("saved-contacts", JSON.stringify(contacts));
-    } else {
-      window.localStorage.removeItem("saved-contacts");
+    if (page > 1) {
+      window.scrollBy({
+        top: document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
     }
-  }, [contacts]);
+  }, [images]);
 
-  const [filter, setFilter] = useState("");
+  useEffect(() => {
+    if (!query) return;
 
-  const addContact = (newContact) => {
-    setContacts((prevContacts) => {
-      return [...prevContacts, newContact];
-    });
-  };
+    const fetchImages = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(
+          "https://api.unsplash.com/search/photos",
+          {
+            params: {
+              query,
+              client_id: API_KEY,
+              per_page: 16,
+              page,
+            },
+          }
+        );
+        console.log("response.data.results :>> ", response.data.results);
 
-  const deleteContact = (contactId) => {
-    setContacts((prevContacs) => {
-      return prevContacs.filter((contact) => contact.id !== contactId);
-    });
-  };
-
-  const visibleContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(filter.toLowerCase())
-  );
+        if (response.data.results.length === 0) {
+          setLoadMore(false);
+          toast.error("Зображення не знайдені!");
+        } else {
+          setImages((prev) => [...prev, ...response.data.results]);
+          setLoadMore(page < response.data.total_pages);
+        }
+      } catch (error) {
+        setErrorMessage(true);
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchImages();
+  }, [query, page]);
 
   return (
     <div>
-      <h1>Phonebook</h1>
-      <ContactForm addContact={addContact} />
-      <SearchBox value={filter} onFilter={setFilter} />
-      <ContactList contacts={visibleContacts} onDelete={deleteContact} />
+      <SearchBar onSubmit={handleSearchSubmit} />
+      <Loader loading={loading} />
+      <ImageGallery onImageClick={openModal} images={images} />
+      <LoadMoreBtn handleLoadMore={handleLoadMore} loadMore={loadMore} />
+      <ErrorMessage errorMessage={errorMessage} />
+      <ImageModal
+        isOpen={selectedImage}
+        imageUrl={selectedImage}
+        onClose={closeModal}
+      />
     </div>
   );
 }

@@ -1,11 +1,14 @@
 #root {
-  max-width: 1280px;
-  padding: 2rem;
+  width: 100%;
   text-align: center;
+  margin: 0 auto;
 }
 h1 {
   margin-bottom: 30px;
   text-align: left;
+}
+body {
+  place-items: normal;
 }
 
 input {
