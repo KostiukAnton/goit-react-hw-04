@@ -19,9 +19,9 @@ export default function App() {
   console.log("images :>> ", images);
   const [page, setPage] = useState(1);
   const [loadMore, setLoadMore] = useState(false);
-  const [loading, setLoading] = useState();
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState("");
 
   const openModal = (imageUrl) => {
     setSelectedImage(imageUrl);
