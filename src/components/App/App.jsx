@@ -51,7 +51,7 @@ export default function App() {
         behavior: "smooth",
       });
     }
-  }, [images]);
+  }, [page]);
 
   useEffect(() => {
     if (!query) return;
